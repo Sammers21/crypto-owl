@@ -37,11 +37,14 @@ func (t *TgBot) Start() {
 			var msg tgbotapi.MessageConfig
 			switch update.Message.Text {
 			case "/wallet", "/start":
+				log.Printf("User %d requested wallet", update.Message.Chat.ID)
 				user, present := t.users[update.Message.Chat.ID]
 				if present {
+					log.Printf("User %d already has wallet", update.Message.Chat.ID)
 					msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallet.WalletMessage())
 					msg.ReplyMarkup = numericKeyboard
 				} else {
+					log.Printf("User %d does not have wallet, creating one", update.Message.Chat.ID)
 					newUser := NewUserWithBtcWallet(update.Message.Chat.ID)
 					t.users[newUser.Userid] = newUser
 					msg = tgbotapi.NewMessage(update.Message.Chat.ID, newUser.Wallet.WalletMessage())
@@ -59,10 +62,26 @@ func (t *TgBot) Start() {
 			if _, err := bot.Request(callback); err != nil {
 				panic(err)
 			}
-			// And finally, send a message containing the data received.
-			msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data+" received")
-			if _, err := bot.Send(msg); err != nil {
-				panic(err)
+			switch update.CallbackQuery.Data {
+			case "Receive":
+				user, present := t.users[update.CallbackQuery.Message.Chat.ID]
+				if !present {
+					log.Printf("User %d does not have wallet, creating one", update.CallbackQuery.Message.Chat.ID)
+					newUser := NewUserWithBtcWallet(update.CallbackQuery.Message.Chat.ID)
+					t.users[newUser.Userid] = newUser
+					user = newUser
+				}
+				// And finally, send a message containing the data received.
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, user.Wallet.Receive())
+				msg.ParseMode = "MarkdownV2"
+				if _, err := bot.Send(msg); err != nil {
+					panic(err)
+				}
+			default:
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Unknown command")
+				if _, err := bot.Send(msg); err != nil {
+					panic(err)
+				}
 			}
 		}
 	}

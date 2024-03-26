@@ -40,3 +40,8 @@ func (w Wallet) WalletMessage() string {
 	}
 	return fmt.Sprintf("💰My Wallet \n\n*%s*: %s", w.Currency.String(), balance)
 }
+
+func (w Wallet) Receive() string {
+	address := GetAddress(w.name)
+	return fmt.Sprintf("*Receive*\n\nUse the address below to send BTC to the CryptoOwl bot wallet address\\.\nNetwork: *Bitcoin \\- BTC*\\.\n\n*Address:* `%s`\n\n Funds will be credited within 30\\-60 minutes\\.", address)
+}

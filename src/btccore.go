@@ -7,9 +7,7 @@ import (
 	"os"
 )
 
-func GetBalance(wallet string) (string, error) {
-	log.Printf("Getting balance for wallet: %s", wallet)
-	// Connect to local bitcoin core RPC server using HTTP POST mode.
+func connection(wallet string) (*rpcclient.Client, error) {
 	connCfg := &rpcclient.ConnConfig{
 		Host:                 "localhost:18332/wallet/" + wallet,
 		User:                 os.Getenv("U"),
@@ -19,6 +17,12 @@ func GetBalance(wallet string) (string, error) {
 		DisableAutoReconnect: false,
 	}
 	client, err := rpcclient.New(connCfg, nil)
+	return client, err
+}
+
+func GetBalance(wallet string) (string, error) {
+	log.Printf("Getting balance for wallet: %s", wallet)
+	client, err := connection(wallet)
 	if err != nil {
 		log.Fatal(err)
 		return "0", err
@@ -50,4 +54,20 @@ func GetBalance(wallet string) (string, error) {
 	}
 	defer client.Shutdown()
 	return balance.String(), nil
+}
+
+func GetAddress(name string) string {
+	log.Printf("Getting address for wallet: %s", name)
+	client, err := connection(name)
+	if err != nil {
+		log.Fatal(err)
+		return "ERROR"
+	}
+	address, err := client.GetNewAddress("")
+	if err != nil {
+		log.Fatal(err)
+		return "ERROR"
+	}
+	defer client.Shutdown()
+	return address.String()
 }
