@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"strconv"
+	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -50,6 +52,29 @@ func (t *TgBot) Start() {
 					msg = tgbotapi.NewMessage(update.Message.Chat.ID, newUser.Wallet.WalletMessage())
 					msg.ReplyMarkup = numericKeyboard
 				}
+			default:
+				log.Printf("User %d sent message: %s", update.Message.Chat.ID, update.Message.Text)
+				split := strings.Split(update.Message.Text, " ")
+				if len(split) != 3 {
+					msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Invalid command, please use `/send <amount> <address>`")
+				} else {
+					amount, err := strconv.ParseFloat(split[1], 64)
+					amounti64 := int64(amount * 100000000)
+					log.Println("Amount: ", amounti64)
+					if err != nil {
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Invalid amount")
+					} else {
+						address := split[2]
+						user, present := t.users[update.Message.Chat.ID]
+						if !present {
+							log.Printf("User %d does not have wallet, creating one", update.Message.Chat.ID)
+							newUser := NewUserWithBtcWallet(update.Message.Chat.ID)
+							t.users[newUser.Userid] = newUser
+							user = newUser
+						}
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallet.Send(amounti64, address))
+					}
+				}
 			}
 			msg.ParseMode = "MarkdownV2"
 			if _, err = bot.Send(msg); err != nil {
@@ -73,6 +98,12 @@ func (t *TgBot) Start() {
 				}
 				// And finally, send a message containing the data received.
 				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, user.Wallet.Receive())
+				msg.ParseMode = "MarkdownV2"
+				if _, err := bot.Send(msg); err != nil {
+					panic(err)
+				}
+			case "Send":
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "In order to send, just type `/send <amount> <address>`")
 				msg.ParseMode = "MarkdownV2"
 				if _, err := bot.Send(msg); err != nil {
 					panic(err)
