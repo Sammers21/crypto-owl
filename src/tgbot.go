@@ -44,6 +44,7 @@ func (t *TgBot) Start() {
 				} else {
 					newUser := NewUserWithBtcWallet(update.Message.Chat.ID)
 					t.users[newUser.Userid] = newUser
+					//getbalance("btc")
 					msg = tgbotapi.NewMessage(update.Message.Chat.ID, newUser.Wallet.WalletMessage())
 					msg.ReplyMarkup = numericKeyboard
 				}

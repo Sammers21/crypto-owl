@@ -30,8 +30,13 @@ func (c Currency) String() string {
 type Wallet struct {
 	Amount   int64
 	Currency Currency
+	name     string
 }
 
 func (w Wallet) WalletMessage() string {
-	return fmt.Sprintf("💰My Wallet \n\n*%s*: %d", w.Currency.String(), w.Amount)
+	balance, err := GetBalance(w.name)
+	if err != nil {
+		return "Error getting balance"
+	}
+	return fmt.Sprintf("💰My Wallet \n\n*%s*: %f", w.Currency.String(), balance)
 }
