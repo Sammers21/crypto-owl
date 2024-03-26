@@ -4,23 +4,24 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcutil"
 )
 
-func main() {
-	rawTx, err := CreateTx("91izeJtyQ1DNGkiRtMGRKBEKYQTX46Ug8mGtKWpX9mDKqArsLpH",
-		"mkYvnmm3KUBkvVqUAYsG6A6amt5Dva4jzX", 60000)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println("raw signed transaction is: ", rawTx)
-}
+//
+//func main() {
+//	rawTx, err := CreateTx("91izeJtyQ1DNGkiRtMGRKBEKYQTX46Ug8mGtKWpX9mDKqArsLpH",
+//		"mkYvnmm3KUBkvVqUAYsG6A6amt5Dva4jzX", 60000)
+//
+//	if err != nil {
+//		fmt.Println(err)
+//	}
+//
+//	fmt.Println("raw signed transaction is: ", rawTx)
+//}
 
 func NewTx() (*wire.MsgTx, error) {
 	return wire.NewMsgTx(wire.TxVersion), nil

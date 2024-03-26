@@ -20,10 +20,6 @@ type TgBot struct {
 	bot   *tgbotapi.BotAPI
 }
 
-func YourWalletMessage(wallet Wallet) string {
-	return `💰Your wallet`
-}
-
 func (t *TgBot) Start() {
 	bot, err := tgbotapi.NewBotAPI(t.token)
 	t.bot = bot
@@ -43,15 +39,16 @@ func (t *TgBot) Start() {
 			case "/wallet", "/start":
 				user, present := t.users[update.Message.Chat.ID]
 				if present {
-					msg = tgbotapi.NewMessage(update.Message.Chat.ID, YourWalletMessage(user.Wallets[0]))
+					msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallet.WalletMessage())
 					msg.ReplyMarkup = numericKeyboard
 				} else {
 					newUser := NewUserWithBtcWallet(update.Message.Chat.ID)
 					t.users[newUser.Userid] = newUser
-					msg = tgbotapi.NewMessage(update.Message.Chat.ID, YourWalletMessage(newUser.Wallets[0]))
+					msg = tgbotapi.NewMessage(update.Message.Chat.ID, newUser.Wallet.WalletMessage())
 					msg.ReplyMarkup = numericKeyboard
 				}
 			}
+			msg.ParseMode = "MarkdownV2"
 			if _, err = bot.Send(msg); err != nil {
 				panic(err)
 			}
