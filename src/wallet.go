@@ -38,5 +38,5 @@ func (w Wallet) WalletMessage() string {
 	if err != nil {
 		return "Error getting balance"
 	}
-	return fmt.Sprintf("💰My Wallet \n\n*%s*: %f", w.Currency.String(), balance)
+	return fmt.Sprintf("💰My Wallet \n\n*%s*: %s", w.Currency.String(), balance)
 }
