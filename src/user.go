@@ -1,12 +1,32 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type User struct {
-	Userid int64
-	Wallet Wallet
+	Userid  int64
+	Wallets map[Currency]Wallet
 }
 
 func NewUserWithBtcWallet(userid int64) User {
-	return User{Userid: userid, Wallet: Wallet{Amount: 0, Currency: BITCOIN, name: "tg-" + fmt.Sprint(userid) + "-btc"}}
+	return User{Userid: userid, Wallets: map[Currency]Wallet{
+		BITCOIN:  {Id: "tg-" + fmt.Sprint(userid) + "-btc", Currency: BITCOIN},
+		ETHEREUM: {Id: "tg-" + fmt.Sprint(userid) + "-eth", Currency: ETHEREUM},
+		//TRON:     {Id: "tg-" + fmt.Sprint(userid) + "-trx", Currency: TRON},
+		//USDT:     {Id: "tg-" + fmt.Sprint(userid) + "-usdt", Currency: USDT},
+	},
+	}
+}
+
+func (u User) WalletMessage() string {
+	var balances string
+	for _, wallet := range u.Wallets {
+		balances += fmt.Sprintf("*%s*: %s\n", wallet.Currency.String(), wallet.Balance())
+	}
+	return strings.Replace(
+		fmt.Sprintf("💰My Wallet \n\n%s", balances),
+		".", "\\.", -1,
+	)
 }

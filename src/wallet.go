@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 type Currency int
@@ -29,26 +28,34 @@ func (c Currency) String() string {
 }
 
 type Wallet struct {
-	Amount   int64
+	Id       string
 	Currency Currency
-	name     string
 }
 
-func (w Wallet) WalletMessage() string {
-	balance, err := GetBalance(w.name)
-	if err != nil {
-		return "Error getting balance"
+func (w Wallet) Balance() string {
+	if w.Currency == BITCOIN {
+		balance, err := GetBtcBalance(w.Id)
+		if err != nil {
+			return "Error getting balance"
+		}
+		return balance
+	} else if w.Currency == ETHEREUM {
+		balance, err := GetEthBalance(w.Id)
+		if err != nil {
+			return "Error getting balance"
+		}
+		return balance
 	}
-	return strings.Replace(fmt.Sprintf("💰My Wallet \n\n*%s*: %s", w.Currency.String(), balance), ".", "\\.", -1)
+	return "Not implemented"
 }
 
 func (w Wallet) Receive() string {
-	address := GetAddress(w.name)
+	address := GetBtcAddress(w.Id)
 	return fmt.Sprintf("*Receive*\n\nUse the address below to send BTC to the CryptoOwl bot wallet address\\.\nNetwork: *Bitcoin \\- BTC*\\.\n\n*Address:* `%s`\n\n Funds will be credited within 30\\-60 minutes\\.", address)
 }
 
 func (w Wallet) Send(amount int64, address string) string {
-	txid, err := Send(w.name, address, amount)
+	txid, err := SendBtc(w.Id, address, amount)
 	if err != nil {
 		return "Error: `" + err.Error() + "`"
 	}

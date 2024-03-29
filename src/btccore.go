@@ -22,7 +22,7 @@ func connection(wallet string) (*rpcclient.Client, error) {
 	return client, err
 }
 
-func GetBalance(wallet string) (string, error) {
+func GetBtcBalance(wallet string) (string, error) {
 	log.Printf("Getting balance for wallet: %s", wallet)
 	client, err := connection(wallet)
 	if err != nil {
@@ -38,7 +38,13 @@ func GetBalance(wallet string) (string, error) {
 				_, err := client.CreateWallet(wallet)
 				if err != nil {
 					log.Printf("Error creating wallet: %v", err)
-					return "0", err
+					ok, err := client.LoadWallet(wallet)
+					if err != nil {
+						log.Printf("Error loading wallet: %v", err)
+						return "0", err
+					} else {
+						log.Printf("Wallet loaded: %v", ok)
+					}
 				}
 			default:
 				log.Printf("Error getting wallet info: %v", err)
@@ -47,7 +53,6 @@ func GetBalance(wallet string) (string, error) {
 		}
 	}
 	log.Printf("Wallet info: %v", info)
-
 	balance, err := client.GetBalance("*")
 	recover()
 	if err != nil {
@@ -58,7 +63,7 @@ func GetBalance(wallet string) (string, error) {
 	return balance.String(), nil
 }
 
-func GetAddress(name string) string {
+func GetBtcAddress(name string) string {
 	log.Printf("Getting address for wallet: %s", name)
 	client, err := connection(name)
 	if err != nil {
@@ -74,7 +79,7 @@ func GetAddress(name string) string {
 	return address.String()
 }
 
-func Send(name string, address string, amount int64) (string, error) {
+func SendBtc(name string, address string, amount int64) (string, error) {
 	log.Printf("Sending %d BTC to %s from wallet: %s", amount, address, name)
 	client, err := connection(name)
 	if err != nil {
@@ -90,7 +95,7 @@ func Send(name string, address string, amount int64) (string, error) {
 	txhash, err := client.SendToAddress(btcaddr, btcamnt)
 	if err != nil {
 		log.Println(err)
-		return "Send error", err
+		return "SendBtc error", err
 	}
 	defer client.Shutdown()
 	return txhash.String(), nil

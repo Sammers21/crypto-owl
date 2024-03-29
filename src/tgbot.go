@@ -10,8 +10,12 @@ import (
 
 var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Send", "Send"),
-		tgbotapi.NewInlineKeyboardButtonData("Receive", "Receive"),
+		tgbotapi.NewInlineKeyboardButtonData("Send BTC", "SendBtc"),
+		tgbotapi.NewInlineKeyboardButtonData("Receive BTC", "ReceiveBtc"),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Send ETH", "SendEth"),
+		tgbotapi.NewInlineKeyboardButtonData("Receive ETH", "ReceiveEth"),
 	),
 )
 
@@ -43,13 +47,13 @@ func (t *TgBot) Start() {
 				user, present := t.users[update.Message.Chat.ID]
 				if present {
 					log.Printf("User %d already has wallet", update.Message.Chat.ID)
-					msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallet.WalletMessage())
+					msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.WalletMessage())
 					msg.ReplyMarkup = numericKeyboard
 				} else {
 					log.Printf("User %d does not have wallet, creating one", update.Message.Chat.ID)
 					newUser := NewUserWithBtcWallet(update.Message.Chat.ID)
 					t.users[newUser.Userid] = newUser
-					msg = tgbotapi.NewMessage(update.Message.Chat.ID, newUser.Wallet.WalletMessage())
+					msg = tgbotapi.NewMessage(update.Message.Chat.ID, newUser.WalletMessage())
 					msg.ReplyMarkup = numericKeyboard
 				}
 			default:
@@ -72,7 +76,7 @@ func (t *TgBot) Start() {
 							t.users[newUser.Userid] = newUser
 							user = newUser
 						}
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallet.Send(amounti64, address))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallets[BITCOIN].Send(amounti64, address))
 					}
 				}
 			}
@@ -97,12 +101,12 @@ func (t *TgBot) Start() {
 					user = newUser
 				}
 				// And finally, send a message containing the data received.
-				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, user.Wallet.Receive())
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, user.Wallets[BITCOIN].Receive())
 				msg.ParseMode = "MarkdownV2"
 				if _, err := bot.Send(msg); err != nil {
 					panic(err)
 				}
-			case "Send":
+			case "SendBtc":
 				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "In order to send, just type `/send <amount> <address>`")
 				msg.ParseMode = "MarkdownV2"
 				if _, err := bot.Send(msg); err != nil {
