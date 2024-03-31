@@ -12,7 +12,7 @@ import (
 )
 
 func client() (*ethclient.Client, error) {
-	client, err := ethclient.Dial("http://localhost:8545/")
+	client, err := ethclient.Dial("https://public.stackup.sh/api/v1/node/ethereum-sepolia")
 	if err != nil {
 		log.Fatal(err)
 	}
