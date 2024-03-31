@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/big"
 )
 
 type Currency int
@@ -76,10 +77,19 @@ func (w Wallet) Receive() string {
 		"*Address:* `%s`\n\n", w.Currency.String(), w.Currency.String(), address)
 }
 
-func (w Wallet) Send(amount int64, address string) string {
-	txid, err := SendBtc(w.Id, address, amount)
-	if err != nil {
-		return "Error: `" + err.Error() + "`"
+func (w Wallet) Send(amount big.Int, address string) string {
+	if w.Currency == BITCOIN {
+		txid, err := SendBtc(w.Id, address, amount)
+		if err != nil {
+			return "Error: `" + err.Error() + "`"
+		}
+		return fmt.Sprintf("BTC Transaction ID: `%s`", txid)
+	} else if w.Currency == ETHEREUM {
+		txid, err := SendEth(w.Id, address, amount)
+		if err != nil {
+			return "Error: `" + err.Error() + "`"
+		}
+		return fmt.Sprintf("ETH Transaction ID: `%s`", txid)
 	}
-	return fmt.Sprintf("Transaction ID: %s", txid)
+	return "Not implemented"
 }

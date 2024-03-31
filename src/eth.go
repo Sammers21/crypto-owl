@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"log"
@@ -103,4 +104,44 @@ func GetEthBalance(wallet string) (string, error) {
 	balanceInEth := new(big.Float).SetInt(balance)
 	balanceInEth = new(big.Float).Quo(balanceInEth, big.NewFloat(math.Pow10(18)))
 	return balanceInEth.String() + " ETH", nil
+}
+
+func SendEth(wallet string, toAddress string, amount big.Int) (string, error) {
+	key, err := KeyForWallet(wallet)
+	client, err := client()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+	nonce, err := client.PendingNonceAt(context.Background(), key.address)
+	if err != nil {
+		log.Fatal(err)
+	}
+	gasLimit := uint64(21000)
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	toAddressEth := common.HexToAddress(toAddress)
+	tx := types.NewTx(&types.LegacyTx{
+		Nonce:    nonce,
+		To:       &toAddressEth,
+		Value:    &amount,
+		Gas:      gasLimit,
+		GasPrice: gasPrice,
+		Data:     nil,
+	})
+	chainID, err := client.NetworkID(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), key.privateKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = client.SendTransaction(context.Background(), signedTx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return signedTx.Hash().Hex(), nil
 }

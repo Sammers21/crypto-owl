@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math/big"
 	"strconv"
 	"strings"
 
@@ -59,16 +60,20 @@ func (t *TgBot) Start() {
 			default:
 				log.Printf("User %d sent message: %s", update.Message.Chat.ID, update.Message.Text)
 				split := strings.Split(update.Message.Text, " ")
-				if len(split) != 3 {
-					msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Invalid command, please use `/send <amount> <address>`")
+				if len(split) != 4 {
+					msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Invalid command, please use `/send <currency> <amount> <address>`")
 				} else {
-					amount, err := strconv.ParseFloat(split[1], 64)
-					amounti64 := int64(amount * 100000000)
-					log.Println("Amount: ", amounti64)
+					currency := split[1]
+					amount := split[2]
+					address := split[3]
+					amountfloat, err := strconv.ParseFloat(amount, 64)
 					if err != nil {
 						msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Invalid amount")
-					} else {
-						address := split[2]
+					} else if currency == "BTC" {
+						amountBigFlt := new(big.Float).Mul(big.NewFloat(amountfloat), big.NewFloat(100000000))
+						amounti64 := new(big.Int)
+						amountBigFlt.Int(amounti64)
+						log.Println("Amount: ", amounti64)
 						user, present := t.users[update.Message.Chat.ID]
 						if !present {
 							log.Printf("User %d does not have wallet, creating one", update.Message.Chat.ID)
@@ -76,8 +81,24 @@ func (t *TgBot) Start() {
 							t.users[newUser.Userid] = newUser
 							user = newUser
 						}
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallets[BITCOIN].Send(amounti64, address))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallets[BITCOIN].Send(*amounti64, address))
+					} else if currency == "ETH" {
+						amountBigFlt := new(big.Float).Mul(big.NewFloat(amountfloat), big.NewFloat(1000000000000000000))
+						amounti64 := new(big.Int)
+						amountBigFlt.Int(amounti64)
+						log.Println("Amount: ", amounti64)
+						user, present := t.users[update.Message.Chat.ID]
+						if !present {
+							log.Printf("User %d does not have wallet, creating one", update.Message.Chat.ID)
+							newUser := NewUser(update.Message.Chat.ID, TELEGRAM)
+							t.users[newUser.Userid] = newUser
+							user = newUser
+						}
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallets[ETHEREUM].Send(*amounti64, address))
+					} else {
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Invalid currency")
 					}
+
 				}
 			}
 			msg.ParseMode = "MarkdownV2"
@@ -107,7 +128,15 @@ func (t *TgBot) Start() {
 					panic(err)
 				}
 			case "SendBtc":
-				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "In order to send, just type `/send <amount> <address>`")
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID,
+					"In order to send, just type `/send BTC <amount> <address>`")
+				msg.ParseMode = "MarkdownV2"
+				if _, err := bot.Send(msg); err != nil {
+					panic(err)
+				}
+			case "SendEth":
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID,
+					"In order to send, just type `/send ETH <amount> <address>`")
 				msg.ParseMode = "MarkdownV2"
 				if _, err := bot.Send(msg); err != nil {
 					panic(err)

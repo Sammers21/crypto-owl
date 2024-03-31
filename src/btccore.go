@@ -6,6 +6,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
 	"log"
+	"math/big"
 	"os"
 )
 
@@ -79,14 +80,14 @@ func GetBtcAddress(name string) string {
 	return address.String()
 }
 
-func SendBtc(name string, address string, amount int64) (string, error) {
+func SendBtc(name string, address string, amount big.Int) (string, error) {
 	log.Printf("Sending %d BTC to %s from wallet: %s", amount, address, name)
 	client, err := connection(name)
 	if err != nil {
 		log.Println(err)
 		return "Connection error", err
 	}
-	btcamnt := btcutil.Amount(amount)
+	btcamnt := btcutil.Amount(amount.Int64())
 	btcaddr, err := btcutil.DecodeAddress(address, &chaincfg.TestNet3Params)
 	if err != nil {
 		log.Println("Error decoding address")
