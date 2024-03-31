@@ -8,6 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"log"
+	"math"
+	"math/big"
 	"os"
 )
 
@@ -97,5 +99,8 @@ func GetEthBalance(wallet string) (string, error) {
 	if err != nil {
 		return "0", err
 	}
-	return balance.String() + " ETH", nil
+	// convert wei to eth
+	balanceInEth := new(big.Float).SetInt(balance)
+	balanceInEth = new(big.Float).Quo(balanceInEth, big.NewFloat(math.Pow10(18)))
+	return balanceInEth.String() + " ETH", nil
 }
