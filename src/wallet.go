@@ -27,6 +27,20 @@ func (c Currency) String() string {
 	return "UNKNOWN"
 }
 
+func (c Currency) FullName() string {
+	switch c {
+	case BITCOIN:
+		return "Bitcoin"
+	case ETHEREUM:
+		return "Ethereum"
+	case TRON:
+		return "Tron"
+	case USDT:
+		return "Tether"
+	}
+	return "UNKNOWN"
+}
+
 type Wallet struct {
 	Id       string
 	Currency Currency
@@ -58,7 +72,8 @@ func (w Wallet) Receive() string {
 	} else {
 		return "Not implemented"
 	}
-	return fmt.Sprintf("*Receive*\n\nUse the address below to send BTC to the CryptoOwl bot wallet address\\.\nNetwork: *Bitcoin \\- BTC*\\.\n\n*Address:* `%s`\n\n Funds will be credited within 30\\-60 minutes\\.", address)
+	return fmt.Sprintf("*Receive %s*\n\nUse the address below to send %s to the CryptoOwl bot wallet address\\.\n\n"+
+		"*Address:* `%s`\n\n", w.Currency.String(), w.Currency.String(), address)
 }
 
 func (w Wallet) Send(amount int64, address string) string {

@@ -28,11 +28,11 @@ type TgBot struct {
 
 func (t *TgBot) Start() {
 	bot, err := tgbotapi.NewBotAPI(t.token)
-	t.bot = bot
-	t.users = make(map[int64]User)
 	if err != nil {
 		log.Panic(err)
 	}
+	t.bot = bot
+	t.users = make(map[int64]User)
 	bot.Debug = true
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 	u := tgbotapi.NewUpdate(0)

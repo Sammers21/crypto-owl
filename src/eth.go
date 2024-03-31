@@ -68,19 +68,14 @@ func KeyForWallet(wallet string) (EthKey, error) {
 		}
 		ethKey = EthKey{privateKey: privateKey}
 		ethKey.Recalculate()
-		_ = crypto.FromECDSA(privateKey)
-		//err = os.WriteFile(wallet, b, 0644)
-		//if err != nil {
-		//	log.Fatal(err)
-		//}
-		return ethKey, nil
-	} else {
-		log.Printf("Wallet file exists: %s, reading it", wallet)
-		fd, err := os.ReadFile(wallet)
+		err = crypto.SaveECDSA(wallet, privateKey)
 		if err != nil {
 			log.Fatal(err)
 		}
-		privateKey, err := crypto.HexToECDSA(string(fd))
+		return ethKey, nil
+	} else {
+		log.Printf("Wallet file exists: %s, reading it", wallet)
+		privateKey, err := crypto.LoadECDSA(wallet)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -102,5 +97,5 @@ func GetEthBalance(wallet string) (string, error) {
 	if err != nil {
 		return "0", err
 	}
-	return balance.String(), err
+	return balance.String() + " ETH", nil
 }
