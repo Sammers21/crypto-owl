@@ -10,7 +10,7 @@ type User struct {
 	Wallets map[Currency]Wallet
 }
 
-func NewUserWithBtcWallet(userid int64) User {
+func NewUser(userid int64, platform Platform) User {
 	return User{Userid: userid, Wallets: map[Currency]Wallet{
 		BITCOIN:  {Id: "tg-" + fmt.Sprint(userid) + "-btc", Currency: BITCOIN},
 		ETHEREUM: {Id: "tg-" + fmt.Sprint(userid) + "-eth", Currency: ETHEREUM},

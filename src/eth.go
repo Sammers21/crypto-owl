@@ -48,6 +48,14 @@ func Exists(name string) (bool, error) {
 	return false, err
 }
 
+func GetEthAddress(wallet string) string {
+	key, err := KeyForWallet(wallet)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return key.address.Hex()
+}
+
 func KeyForWallet(wallet string) (EthKey, error) {
 	exists, _ := Exists(wallet)
 	var ethKey EthKey

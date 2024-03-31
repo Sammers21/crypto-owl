@@ -51,7 +51,7 @@ func (t *TgBot) Start() {
 					msg.ReplyMarkup = numericKeyboard
 				} else {
 					log.Printf("User %d does not have wallet, creating one", update.Message.Chat.ID)
-					newUser := NewUserWithBtcWallet(update.Message.Chat.ID)
+					newUser := NewUser(update.Message.Chat.ID, TELEGRAM)
 					t.users[newUser.Userid] = newUser
 					msg = tgbotapi.NewMessage(update.Message.Chat.ID, newUser.WalletMessage())
 					msg.ReplyMarkup = numericKeyboard
@@ -72,7 +72,7 @@ func (t *TgBot) Start() {
 						user, present := t.users[update.Message.Chat.ID]
 						if !present {
 							log.Printf("User %d does not have wallet, creating one", update.Message.Chat.ID)
-							newUser := NewUserWithBtcWallet(update.Message.Chat.ID)
+							newUser := NewUser(update.Message.Chat.ID, TELEGRAM)
 							t.users[newUser.Userid] = newUser
 							user = newUser
 						}
@@ -92,11 +92,11 @@ func (t *TgBot) Start() {
 				panic(err)
 			}
 			switch update.CallbackQuery.Data {
-			case "Receive":
+			case "ReceiveBtc":
 				user, present := t.users[update.CallbackQuery.Message.Chat.ID]
 				if !present {
 					log.Printf("User %d does not have wallet, creating one", update.CallbackQuery.Message.Chat.ID)
-					newUser := NewUserWithBtcWallet(update.CallbackQuery.Message.Chat.ID)
+					newUser := NewUser(update.CallbackQuery.Message.Chat.ID, TELEGRAM)
 					t.users[newUser.Userid] = newUser
 					user = newUser
 				}
@@ -108,6 +108,20 @@ func (t *TgBot) Start() {
 				}
 			case "SendBtc":
 				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "In order to send, just type `/send <amount> <address>`")
+				msg.ParseMode = "MarkdownV2"
+				if _, err := bot.Send(msg); err != nil {
+					panic(err)
+				}
+			case "ReceiveEth":
+				user, present := t.users[update.CallbackQuery.Message.Chat.ID]
+				if !present {
+					log.Printf("User %d does not have wallet, creating one", update.CallbackQuery.Message.Chat.ID)
+					newUser := NewUser(update.CallbackQuery.Message.Chat.ID, TELEGRAM)
+					t.users[newUser.Userid] = newUser
+					user = newUser
+				}
+				// And finally, send a message containing the data received.
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, user.Wallets[ETHEREUM].Receive())
 				msg.ParseMode = "MarkdownV2"
 				if _, err := bot.Send(msg); err != nil {
 					panic(err)

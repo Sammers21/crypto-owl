@@ -50,7 +50,14 @@ func (w Wallet) Balance() string {
 }
 
 func (w Wallet) Receive() string {
-	address := GetBtcAddress(w.Id)
+	var address string
+	if w.Currency == BITCOIN {
+		address = GetBtcAddress(w.Id)
+	} else if w.Currency == ETHEREUM {
+		address = GetEthAddress(w.Id)
+	} else {
+		return "Not implemented"
+	}
 	return fmt.Sprintf("*Receive*\n\nUse the address below to send BTC to the CryptoOwl bot wallet address\\.\nNetwork: *Bitcoin \\- BTC*\\.\n\n*Address:* `%s`\n\n Funds will be credited within 30\\-60 minutes\\.", address)
 }
 
