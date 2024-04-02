@@ -1,9 +1,11 @@
-package main
+package blockchain
 
 import (
 	"context"
+	"crypto-owl/tether"
 	"crypto/ecdsa"
 	"errors"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -20,6 +22,24 @@ func client() (*ethclient.Client, error) {
 		log.Fatal(err)
 	}
 	return client, err
+}
+
+func GetUSDTBalance(wallet string, contractAddress string) (string, error) {
+	key, err := KeyForWallet(wallet)
+	client, err := client()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+	contract, err := tether.NewTether(common.HexToAddress(contractAddress), client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	amount, _ := contract.BalanceOf(&bind.CallOpts{}, key.address)
+	decimals, _ := contract.Decimals(&bind.CallOpts{})
+	balanceInEth := new(big.Float).SetInt(amount)
+	balanceInEth = new(big.Float).Quo(balanceInEth, big.NewFloat(math.Pow10(int(decimals.Int64()))))
+	return balanceInEth.String() + " USDT", nil
 }
 
 type EthKey struct {

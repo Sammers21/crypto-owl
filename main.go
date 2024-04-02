@@ -1,9 +1,12 @@
 package main
 
-import "os"
+import (
+	"crypto-owl/bot"
+	"os"
+)
 
 func main() {
 	token := os.Getenv("TELEGRAM_APITOKEN")
-	bot := TgBot{token: token}
+	bot := bot.TgBot{Token: token}
 	bot.Start()
 }

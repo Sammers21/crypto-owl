@@ -1,6 +1,7 @@
-package main
+package bot
 
 import (
+	"crypto-owl/wallet"
 	"log"
 	"math/big"
 	"strconv"
@@ -21,14 +22,14 @@ var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 )
 
 type TgBot struct {
-	token string
+	Token string
 	//map of user id to user
 	users map[int64]User
 	bot   *tgbotapi.BotAPI
 }
 
 func (t *TgBot) Start() {
-	bot, err := tgbotapi.NewBotAPI(t.token)
+	bot, err := tgbotapi.NewBotAPI(t.Token)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -81,7 +82,7 @@ func (t *TgBot) Start() {
 							t.users[newUser.Userid] = newUser
 							user = newUser
 						}
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallets[BITCOIN].Send(*amounti64, address))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallets[wallet.BITCOIN].Send(*amounti64, address))
 					} else if currency == "ETH" {
 						amountBigFlt := new(big.Float).Mul(big.NewFloat(amountfloat), big.NewFloat(1000000000000000000))
 						amounti64 := new(big.Int)
@@ -94,7 +95,7 @@ func (t *TgBot) Start() {
 							t.users[newUser.Userid] = newUser
 							user = newUser
 						}
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallets[ETHEREUM].Send(*amounti64, address))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, user.Wallets[wallet.ETHEREUM].Send(*amounti64, address))
 					} else {
 						msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Invalid currency")
 					}
@@ -122,7 +123,7 @@ func (t *TgBot) Start() {
 					user = newUser
 				}
 				// And finally, send a message containing the data received.
-				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, user.Wallets[BITCOIN].Receive())
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, user.Wallets[wallet.BITCOIN].Receive())
 				msg.ParseMode = "MarkdownV2"
 				if _, err := bot.Send(msg); err != nil {
 					panic(err)
@@ -150,7 +151,7 @@ func (t *TgBot) Start() {
 					user = newUser
 				}
 				// And finally, send a message containing the data received.
-				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, user.Wallets[ETHEREUM].Receive())
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, user.Wallets[wallet.ETHEREUM].Receive())
 				msg.ParseMode = "MarkdownV2"
 				if _, err := bot.Send(msg); err != nil {
 					panic(err)

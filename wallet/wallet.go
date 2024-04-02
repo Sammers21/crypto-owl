@@ -1,6 +1,7 @@
-package main
+package wallet
 
 import (
+	"crypto-owl/wallet/blockchain"
 	"fmt"
 	"math/big"
 )
@@ -37,7 +38,7 @@ func (c Currency) FullName() string {
 	case TRON:
 		return "Tron"
 	case USDT:
-		return "Tether"
+		return "USDT ERC20"
 	}
 	return "UNKNOWN"
 }
@@ -49,13 +50,19 @@ type Wallet struct {
 
 func (w Wallet) Balance() string {
 	if w.Currency == BITCOIN {
-		balance, err := GetBtcBalance(w.Id)
+		balance, err := blockchain.GetBtcBalance(w.Id)
 		if err != nil {
 			return "Error getting balance"
 		}
 		return balance
 	} else if w.Currency == ETHEREUM {
-		balance, err := GetEthBalance(w.Id)
+		balance, err := blockchain.GetEthBalance(w.Id)
+		if err != nil {
+			return "Error getting balance"
+		}
+		return balance
+	} else if w.Currency == USDT {
+		balance, err := blockchain.GetUSDTBalance(w.Id, "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06")
 		if err != nil {
 			return "Error getting balance"
 		}
@@ -67,9 +74,9 @@ func (w Wallet) Balance() string {
 func (w Wallet) Receive() string {
 	var address string
 	if w.Currency == BITCOIN {
-		address = GetBtcAddress(w.Id)
+		address = blockchain.GetBtcAddress(w.Id)
 	} else if w.Currency == ETHEREUM {
-		address = GetEthAddress(w.Id)
+		address = blockchain.GetEthAddress(w.Id)
 	} else {
 		return "Not implemented"
 	}
@@ -79,13 +86,13 @@ func (w Wallet) Receive() string {
 
 func (w Wallet) Send(amount big.Int, address string) string {
 	if w.Currency == BITCOIN {
-		txid, err := SendBtc(w.Id, address, amount)
+		txid, err := blockchain.SendBtc(w.Id, address, amount)
 		if err != nil {
 			return "Error: `" + err.Error() + "`"
 		}
 		return fmt.Sprintf("BTC Transaction ID: `%s`", txid)
 	} else if w.Currency == ETHEREUM {
-		txid, err := SendEth(w.Id, address, amount)
+		txid, err := blockchain.SendEth(w.Id, address, amount)
 		if err != nil {
 			return "Error: `" + err.Error() + "`"
 		}
