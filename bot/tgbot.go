@@ -2,6 +2,7 @@ package bot
 
 import (
 	"crypto-owl/wallet"
+	"fmt"
 	"log"
 	"math/big"
 	"strconv"
@@ -12,12 +13,27 @@ import (
 
 var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Send BTC", "SendBtc"),
-		tgbotapi.NewInlineKeyboardButtonData("Receive BTC", "ReceiveBtc"),
+		tgbotapi.NewInlineKeyboardButtonData("Send BTC", "S_BTC"),
+		tgbotapi.NewInlineKeyboardButtonData("Receive BTC", "R_BTC"),
 	),
 	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Send ETH", "SendEth"),
-		tgbotapi.NewInlineKeyboardButtonData("Receive ETH", "ReceiveEth"),
+		tgbotapi.NewInlineKeyboardButtonData("Send ETH", "S_ETH"),
+		tgbotapi.NewInlineKeyboardButtonData("Receive ETH", "R_ETH"),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Send USDT", "S_USDT-ERC20"),
+		tgbotapi.NewInlineKeyboardButtonData("Receive USDT", "R_USDT-ERC20"),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Send USDC", "S_USDC-ERC20"),
+		tgbotapi.NewInlineKeyboardButtonData("Receive USDC", "R_USDC-ERC20"),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Send WETH", "S_WETH-ERC20"),
+		tgbotapi.NewInlineKeyboardButtonData("Receive WETH", "R_WETH-ERC20"),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Swap ERC20", "SWAP_ERC20"),
 	),
 )
 
@@ -114,7 +130,7 @@ func (t *TgBot) Start() {
 				panic(err)
 			}
 			switch update.CallbackQuery.Data {
-			case "ReceiveBtc":
+			case "R_BTC":
 				user, present := t.users[update.CallbackQuery.Message.Chat.ID]
 				if !present {
 					log.Printf("User %d does not have wallet, creating one", update.CallbackQuery.Message.Chat.ID)
@@ -128,21 +144,17 @@ func (t *TgBot) Start() {
 				if _, err := bot.Send(msg); err != nil {
 					panic(err)
 				}
-			case "SendBtc":
-				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID,
-					"In order to send, just type `/send BTC <amount> <address>`")
+			case "S_BTC", "S_ETH", "S_USDT-ERC20", "S_USDC-ERC20", "S_WETH_ERC20":
+				crncy := strings.Split(update.CallbackQuery.Data, "_")[1]
+				text := fmt.Sprintf("In order to send, just type `/send %s <amount> <address>`", crncy)
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, text)
 				msg.ParseMode = "MarkdownV2"
 				if _, err := bot.Send(msg); err != nil {
 					panic(err)
 				}
-			case "SendEth":
-				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID,
-					"In order to send, just type `/send ETH <amount> <address>`")
-				msg.ParseMode = "MarkdownV2"
-				if _, err := bot.Send(msg); err != nil {
-					panic(err)
-				}
-			case "ReceiveEth":
+			case "R_ETH", "R_USDT-ERC20", "R_USDC-ERC20", "R_WETH-ERC20":
+				rcr := strings.Split(update.CallbackQuery.Data, "_")[1]
+				cr := wallet.CurrencyFromString(rcr)
 				user, present := t.users[update.CallbackQuery.Message.Chat.ID]
 				if !present {
 					log.Printf("User %d does not have wallet, creating one", update.CallbackQuery.Message.Chat.ID)
@@ -151,7 +163,7 @@ func (t *TgBot) Start() {
 					user = newUser
 				}
 				// And finally, send a message containing the data received.
-				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, user.Wallets[wallet.ETHEREUM].Receive())
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, user.Wallets[cr].Receive())
 				msg.ParseMode = "MarkdownV2"
 				if _, err := bot.Send(msg); err != nil {
 					panic(err)

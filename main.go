@@ -7,6 +7,6 @@ import (
 
 func main() {
 	token := os.Getenv("TELEGRAM_APITOKEN")
-	bot := bot.TgBot{Token: token}
-	bot.Start()
+	b := bot.TgBot{Token: token}
+	b.Start()
 }

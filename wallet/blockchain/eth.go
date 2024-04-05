@@ -2,7 +2,10 @@ package blockchain
 
 import (
 	"context"
-	"crypto-owl/tether"
+	"crypto-owl/abis/FiatTokenProxy"
+	"crypto-owl/abis/FiatTokenV22"
+	"crypto-owl/abis/WETH9"
+	"crypto-owl/abis/tether"
 	"crypto/ecdsa"
 	"errors"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -40,6 +43,50 @@ func GetUSDTBalance(wallet string, contractAddress string) (string, error) {
 	balanceInEth := new(big.Float).SetInt(amount)
 	balanceInEth = new(big.Float).Quo(balanceInEth, big.NewFloat(math.Pow10(int(decimals.Int64()))))
 	return balanceInEth.String() + " USDT", nil
+}
+func GetWETHBalance(wallet string, contractAddress string) (string, error) {
+	key, err := KeyForWallet(wallet)
+	client, err := client()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+	contract, err := WETH9.NewWETH9(common.HexToAddress(contractAddress), client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	amount, _ := contract.BalanceOf(&bind.CallOpts{}, key.address)
+	decimals, _ := contract.Decimals(&bind.CallOpts{})
+	balanceInEth := new(big.Float).SetInt(amount)
+	balanceInEth = new(big.Float).Quo(balanceInEth, big.NewFloat(math.Pow10(int(decimals))))
+	return balanceInEth.String() + " WETH", nil
+}
+
+func GetUSDCBalance(wallet string, contractAddress string) (string, error) {
+	key, err := KeyForWallet(wallet)
+	client, err := client()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+	contract, err := FiatTokenProxy.NewFiatTokenProxy(common.HexToAddress(contractAddress), client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	addr, err := contract.Implementation(&bind.CallOpts{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Implementation address: %s", addr.Hex())
+	contractv2, err := FiatTokenV22.NewFiatTokenV22(addr, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	amount, _ := contractv2.BalanceOf(&bind.CallOpts{}, key.address)
+	decimals, _ := contractv2.Decimals(&bind.CallOpts{})
+	balanceInEth := new(big.Float).SetInt(amount)
+	balanceInEth = new(big.Float).Quo(balanceInEth, big.NewFloat(math.Pow10(int(decimals))))
+	return balanceInEth.String() + " USDC", nil
 }
 
 type EthKey struct {
