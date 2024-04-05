@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"context"
-	"crypto-owl/abis/FiatTokenProxy"
 	"crypto-owl/abis/FiatTokenV22"
 	"crypto-owl/abis/WETH9"
 	"crypto-owl/abis/tether"
@@ -69,21 +68,12 @@ func GetUSDCBalance(wallet string, contractAddress string) (string, error) {
 		log.Fatal(err)
 	}
 	defer client.Close()
-	contract, err := FiatTokenProxy.NewFiatTokenProxy(common.HexToAddress(contractAddress), client)
+	contract, err := FiatTokenV22.NewFiatTokenV22(common.HexToAddress(contractAddress), client)
 	if err != nil {
 		log.Fatal(err)
 	}
-	addr, err := contract.Implementation(&bind.CallOpts{})
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Implementation address: %s", addr.Hex())
-	contractv2, err := FiatTokenV22.NewFiatTokenV22(addr, client)
-	if err != nil {
-		log.Fatal(err)
-	}
-	amount, _ := contractv2.BalanceOf(&bind.CallOpts{}, key.address)
-	decimals, _ := contractv2.Decimals(&bind.CallOpts{})
+	amount, _ := contract.BalanceOf(&bind.CallOpts{}, key.address)
+	decimals, _ := contract.Decimals(&bind.CallOpts{})
 	balanceInEth := new(big.Float).SetInt(amount)
 	balanceInEth = new(big.Float).Quo(balanceInEth, big.NewFloat(math.Pow10(int(decimals))))
 	return balanceInEth.String() + " USDC", nil
@@ -154,6 +144,48 @@ func KeyForWallet(wallet string) (EthKey, error) {
 		return ethKey, nil
 	}
 }
+
+type UniSwapParams struct {
+	contractAddress  common.Address
+	tokenIn          common.Address
+	tokenOut         common.Address
+	recipient        common.Address
+	amountIn         *big.Int
+	amountOutMinimum *big.Int
+}
+
+//func UniswapSwap(wallet string, params UniSwapParams) (string, error) {
+//	key, err := KeyForWallet(wallet)
+//	client, err := client()
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	defer client.Close()
+//	contract, error := SwapRouter02.NewSwapRouter02(params.contractAddress, client)
+//	if error != nil {
+//		log.Fatal(error)
+//	}
+//	singleParams := SwapRouter02.IV3SwapRouterExactInputSingleParams{
+//		TokenIn:           params.tokenIn,
+//		TokenOut:          params.tokenOut,
+//		Recipient:         params.recipient,
+//		AmountIn:          params.amountIn,
+//		Fee:               new(big.Int).SetUint64(3000),
+//		AmountOutMinimum:  params.amountOutMinimum,
+//		SqrtPriceLimitX96: new(big.Int).SetUint64(0),
+//	}
+//	res, err := contract.ExactInputSingle(&bind.TransactOpts{
+//		From: key.address,
+//		Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
+//			signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), key.privateKey)
+//			return signedTx, err
+//		},
+//	}, singleParams)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	return res.Hash().Hex(), nil
+//}
 
 func GetEthBalance(wallet string) (string, error) {
 	key, err := KeyForWallet(wallet)

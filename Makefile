@@ -13,6 +13,6 @@ weth9:
 	cd abis/WETH9 && abigen --abi=WETH9.abi --pkg=WETH9 --out=WETH9.go
 
 uniswap:
-	cd abis/uniswap && abigen --abi=SwapRouter02.abi --pkg=uniswap --out=SwapRouter02.go
+	cd abis/SwapRouter02 && abigen --abi=SwapRouter02.abi --pkg=SwapRouter02 --out=SwapRouter02.go
 
 .PHONY: usdc
