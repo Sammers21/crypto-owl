@@ -65,7 +65,7 @@ func GetBtcBalance(wallet string) (string, error) {
 }
 
 func GetBtcAddress(name string) string {
-	log.Printf("Getting address for wallet: %s", name)
+	log.Printf("Getting Address for wallet: %s", name)
 	client, err := connection(name)
 	if err != nil {
 		log.Fatal(err)
@@ -90,8 +90,8 @@ func SendBtc(name string, address string, amount big.Int) (string, error) {
 	btcamnt := btcutil.Amount(amount.Int64())
 	btcaddr, err := btcutil.DecodeAddress(address, &chaincfg.TestNet3Params)
 	if err != nil {
-		log.Println("Error decoding address")
-		return "Error decoding address", err
+		log.Println("Error decoding Address")
+		return "Error decoding Address", err
 	}
 	txhash, err := client.SendToAddress(btcaddr, btcamnt)
 	if err != nil {

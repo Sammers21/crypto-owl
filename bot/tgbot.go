@@ -168,6 +168,15 @@ func (t *TgBot) Start() {
 				if _, err := bot.Send(msg); err != nil {
 					panic(err)
 				}
+			case "SWAP_ERC20":
+				//user, present := t.users[update.CallbackQuery.Message.Chat.ID]
+				//if !present {
+				//	log.Printf("User %d does not have wallet, creating one", update.CallbackQuery.Message.Chat.ID)
+				//	newUser := NewUser(update.CallbackQuery.Message.Chat.ID, TELEGRAM)
+				//	t.users[newUser.Userid] = newUser
+				//	user = newUser
+				//}
+
 			default:
 				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Unknown command")
 				if _, err := bot.Send(msg); err != nil {

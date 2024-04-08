@@ -3,6 +3,7 @@ package blockchain
 import (
 	"context"
 	"crypto-owl/abis/FiatTokenV22"
+	"crypto-owl/abis/SwapRouter02"
 	"crypto-owl/abis/WETH9"
 	"crypto-owl/abis/tether"
 	"crypto/ecdsa"
@@ -37,7 +38,7 @@ func GetUSDTBalance(wallet string, contractAddress string) (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	amount, _ := contract.BalanceOf(&bind.CallOpts{}, key.address)
+	amount, _ := contract.BalanceOf(&bind.CallOpts{}, key.Address)
 	decimals, _ := contract.Decimals(&bind.CallOpts{})
 	balanceInEth := new(big.Float).SetInt(amount)
 	balanceInEth = new(big.Float).Quo(balanceInEth, big.NewFloat(math.Pow10(int(decimals.Int64()))))
@@ -54,7 +55,7 @@ func GetWETHBalance(wallet string, contractAddress string) (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	amount, _ := contract.BalanceOf(&bind.CallOpts{}, key.address)
+	amount, _ := contract.BalanceOf(&bind.CallOpts{}, key.Address)
 	decimals, _ := contract.Decimals(&bind.CallOpts{})
 	balanceInEth := new(big.Float).SetInt(amount)
 	balanceInEth = new(big.Float).Quo(balanceInEth, big.NewFloat(math.Pow10(int(decimals))))
@@ -72,7 +73,7 @@ func GetUSDCBalance(wallet string, contractAddress string) (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	amount, _ := contract.BalanceOf(&bind.CallOpts{}, key.address)
+	amount, _ := contract.BalanceOf(&bind.CallOpts{}, key.Address)
 	decimals, _ := contract.Decimals(&bind.CallOpts{})
 	balanceInEth := new(big.Float).SetInt(amount)
 	balanceInEth = new(big.Float).Quo(balanceInEth, big.NewFloat(math.Pow10(int(decimals))))
@@ -81,20 +82,20 @@ func GetUSDCBalance(wallet string, contractAddress string) (string, error) {
 
 type EthKey struct {
 	privateKey *ecdsa.PrivateKey
-	publicKey  *ecdsa.PublicKey
-	address    common.Address
+	PublicKey  *ecdsa.PublicKey
+	Address    common.Address
 }
 
 func (e *EthKey) Recalculate() {
 	publicKey := e.privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+		log.Fatal("cannot assert type: PublicKey is not of type *ecdsa.PublicKey")
 	}
-	e.publicKey = publicKeyECDSA
+	e.PublicKey = publicKeyECDSA
 	address := crypto.PubkeyToAddress(*publicKeyECDSA)
-	log.Printf("Setting address to: %s", address.Hex())
-	e.address = address
+	log.Printf("Setting Address to: %s", address.Hex())
+	e.Address = address
 }
 
 func Exists(name string) (bool, error) {
@@ -113,7 +114,7 @@ func GetEthAddress(wallet string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return key.address.Hex()
+	return key.Address.Hex()
 }
 
 func KeyForWallet(wallet string) (EthKey, error) {
@@ -146,46 +147,85 @@ func KeyForWallet(wallet string) (EthKey, error) {
 }
 
 type UniSwapParams struct {
-	contractAddress  common.Address
-	tokenIn          common.Address
-	tokenOut         common.Address
-	recipient        common.Address
-	amountIn         *big.Int
-	amountOutMinimum *big.Int
+	ContractAddress  common.Address
+	TokenIn          common.Address
+	TokenOut         common.Address
+	Recipient        common.Address
+	AmountIn         *big.Int
+	AmountOutMinimum *big.Int
 }
 
-//func UniswapSwap(wallet string, params UniSwapParams) (string, error) {
-//	key, err := KeyForWallet(wallet)
-//	client, err := client()
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	defer client.Close()
-//	contract, error := SwapRouter02.NewSwapRouter02(params.contractAddress, client)
-//	if error != nil {
-//		log.Fatal(error)
-//	}
-//	singleParams := SwapRouter02.IV3SwapRouterExactInputSingleParams{
-//		TokenIn:           params.tokenIn,
-//		TokenOut:          params.tokenOut,
-//		Recipient:         params.recipient,
-//		AmountIn:          params.amountIn,
-//		Fee:               new(big.Int).SetUint64(3000),
-//		AmountOutMinimum:  params.amountOutMinimum,
-//		SqrtPriceLimitX96: new(big.Int).SetUint64(0),
-//	}
-//	res, err := contract.ExactInputSingle(&bind.TransactOpts{
-//		From: key.address,
-//		Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
-//			signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), key.privateKey)
-//			return signedTx, err
-//		},
-//	}, singleParams)
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	return res.Hash().Hex(), nil
-//}
+func UniswapSwap(wallet string, params UniSwapParams) (string, error) {
+	key, err := KeyForWallet(wallet)
+	client, err := client()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+	contract, err := SwapRouter02.NewSwapRouter02(params.ContractAddress, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	singleParams := SwapRouter02.IV3SwapRouterExactInputSingleParams{
+		TokenIn:           params.TokenIn,
+		TokenOut:          params.TokenOut,
+		Recipient:         params.Recipient,
+		AmountIn:          params.AmountIn,
+		Fee:               new(big.Int).SetUint64(10000),
+		AmountOutMinimum:  params.AmountOutMinimum,
+		SqrtPriceLimitX96: new(big.Int).SetUint64(0),
+	}
+	//weth, er := WETH9.NewWETH9(params.TokenIn, client)
+	//if er != nil {
+	//	log.Fatal(er)
+	//}
+	nonce, err := client.PendingNonceAt(context.Background(), key.Address)
+	if err != nil {
+		log.Fatal(err)
+	}
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	chainID, err := client.NetworkID(context.Background())
+	//x, err := weth.Approve(&bind.TransactOpts{
+	//	From:     key.Address,
+	//	Context:  context.Background(),
+	//	GasPrice: gasPrice,
+	//	Nonce:    new(big.Int).SetUint64(nonce),
+	//	Signer: func(c common.Address, tx *types.Transaction) (*types.Transaction, error) {
+	//		log.Printf("Signing approve transaction for Address: %s", key.Address.Hex())
+	//		return types.SignTx(tx, types.NewEIP155Signer(chainID), key.privateKey)
+	//	},
+	//}, params.ContractAddress, params.AmountIn)
+	//log.Printf("Approved tx: %s", x.Hash().Hex())
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//nonce, err = client.PendingNonceAt(context.Background(), key.Address)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//gasPrice, err = client.SuggestGasPrice(context.Background())
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	res, err := contract.ExactInputSingle(&bind.TransactOpts{
+		From:     key.Address,
+		Context:  context.Background(),
+		GasPrice: gasPrice,
+		Nonce:    new(big.Int).SetUint64(nonce),
+		Signer: func(c common.Address, tx *types.Transaction) (*types.Transaction, error) {
+			log.Printf("Signing uniswap transaction for Address: %s", key.Address.Hex())
+			return types.SignTx(tx, types.NewEIP155Signer(chainID), key.privateKey)
+		},
+	}, singleParams)
+	if err != nil {
+		log.Printf("TX: %+v", res)
+		log.Fatal("UNISWAP Transaction failed: ", err)
+	}
+	return res.Hash().Hex(), nil
+}
 
 func GetEthBalance(wallet string) (string, error) {
 	key, err := KeyForWallet(wallet)
@@ -194,8 +234,8 @@ func GetEthBalance(wallet string) (string, error) {
 		log.Fatal(err)
 	}
 	defer client.Close()
-	log.Printf("Getting balance for address: %s", key.address.Hex())
-	balance, err := client.BalanceAt(context.Background(), key.address, nil)
+	log.Printf("Getting balance for Address: %s", key.Address.Hex())
+	balance, err := client.BalanceAt(context.Background(), key.Address, nil)
 	if err != nil {
 		return "0", err
 	}
@@ -212,7 +252,7 @@ func SendEth(wallet string, toAddress string, amount big.Int) (string, error) {
 		log.Fatal(err)
 	}
 	defer client.Close()
-	nonce, err := client.PendingNonceAt(context.Background(), key.address)
+	nonce, err := client.PendingNonceAt(context.Background(), key.Address)
 	if err != nil {
 		log.Fatal(err)
 	}
